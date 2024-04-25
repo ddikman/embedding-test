@@ -88,8 +88,7 @@ const compareTexts = async (testCase, model, evalName, evalFunc) => {
     return distance;
 };
 
-
-const testCases = [
+const exampleTestCases = [
   {
     name: 'long-reverse-order',
     first: `Has a driver's license. Knows C#. Has a driver's license. Knows C#. Has a driver's license. Knows C#. Has a driver's license. Knows C#`,
@@ -116,6 +115,12 @@ const testCases = [
     second: `Fluent in Swedish`
   }
 ]
+
+if (!fs.existsSync('test-cases.json')) {
+  fs.writeFileSync('test-cases.json', JSON.stringify(exampleTestCases, null, 2));
+}
+
+const testCases = JSON.parse(fs.readFileSync('test-cases.json', 'utf8'));
 
 const testModels = [
   {

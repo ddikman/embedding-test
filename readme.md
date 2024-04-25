@@ -14,6 +14,10 @@ Then you can modify the test cases in `index.js`
 node index.js
 ```
 
+## Test cases
+
+On first run, example test cases will be used and written to `test-cases.json`, you can then edit these test cases to run your own.
+
 
 ## Other
 
