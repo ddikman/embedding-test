@@ -72,7 +72,7 @@ const cosineDistance = (vec1, vec2) => {
 
 const negativeInnerProduct = (vec1, vec2) => {
   const dotProduct = -vec1.reduce((acc, val, i) => acc + val * vec2[i], 0);
-  const normalized = 1 / (1 + Math.exp(-dotProduct));
+  const normalized = (1 + Math.exp(dotProduct)) ** -1;
   return normalized;
 }
 
