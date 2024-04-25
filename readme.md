@@ -13,3 +13,8 @@ Then you can modify the test cases in `index.js`
 ```shell
 node index.js
 ```
+
+
+## Other
+
+You'll get a warning of using punycode which messes with the structure. You can use node `20.5.1` with nvm to avoid this.
