@@ -80,87 +80,50 @@ const negativeInnerProduct = (vec1, vec2) => {
 const cache = loadCache();
 
 // Main function to compare texts
-const compareTexts = async (testCase, model, evalName, evalFunc) => {
-    const embedding1 = await getEmbedding(testCase.first, cache, model);
-    const embedding2 = await getEmbedding(testCase.second, cache, model);
+const compareTexts = async (text, term, model, evalName, evalFunc) => {
+    const embedding1 = await getEmbedding(text, cache, model);
+    const embedding2 = await getEmbedding(term, cache, model);
     const distance = evalFunc(embedding1, embedding2);
-    console.log(`${evalName}: ${distance}`);
     return distance;
 };
 
-const exampleTestCases = [
-  {
-    name: 'long-reverse-order',
-    first: `Has a driver's license. Knows C#. Has a driver's license. Knows C#. Has a driver's license. Knows C#. Has a driver's license. Knows C#`,
-    second: `Knows C#. Has driver's license. Knows C#. Has driver's license. Knows C#. Has driver's license. Knows C#. Has driver's license`
-  },
-  {
-    name: 'reverse-order',
-    first: `Has a driver's license. Knows C#.`,
-    second: `Knows C#. Has driver's license.`
-  },
-  {
-    name: 'has-vs-require',
-    first: `Has B-driver license`,
-    second: `Requires B-driver's license`
-  },
-  {
-    name: 'fluent-vs-must',
-    first: `Must speak Swedish and English`,
-    second: `Fluent in Swedish and English`
-  },
-  {
-    name: 'not-a-requirement',
-    first: `Not a requirement to speak Swedish`,
-    second: `Fluent in Swedish`
-  }
-]
-
 if (!fs.existsSync('test-cases.json')) {
+  const exampleTestCases = {
+    "terms": [ "rat", "hat", "cat", "building", "construction worker", "president", "cheese", "Bjorn Borg", "kitchenette", "makeup" ],
+    "texts": [
+      { "name": "The rat in a hat", "text": "The rat in a hat" }
+    ]
+  };
+
   fs.writeFileSync('test-cases.json', JSON.stringify(exampleTestCases, null, 2));
 }
 
 const testCases = JSON.parse(fs.readFileSync('test-cases.json', 'utf8'));
 
-const testModels = [
-  {
-    model: "text-embedding-ada-002",
-  },
-  {
-    model: "text-embedding-3-large",
-    dimensions: 1536,
-  },
-  {
-    model: "text-embedding-3-small"
-  },
-]
-
-const evaluationModes = {
-  'euclidean': euclideanDistance,
-  'cosine': cosineDistance,
-  'neg-inner-product': negativeInnerProduct,
-  'manhattan': manhattanDistance
+const testModel = {
+  model: "text-embedding-3-large",
+  dimensions: 1536,
 }
 
-async function main() {
-  const csvHeader = ['model', 'test-case', ...Object.keys(evaluationModes)];
-  const csvRows = [];
-  for (const model of testModels) {
-    console.log('Evaluating model:', model.model);
-    for (const testCase of testCases) {
-      console.log('Test case:', testCase.name);
-      const scores = []
-      for (const evaluationMode of Object.keys(evaluationModes)) {
-        const evaluationFunction = evaluationModes[evaluationMode];
-        const score = await compareTexts(testCase, model, evaluationMode, evaluationFunction);
-        scores.push(`${Math.round(score.toFixed(2) * 100)}%`);
-      }
-      csvRows.push([model.model, testCase.name, ...scores]);
-    }
-    console.log('---\n\n');
-  }
+const evaluationMethodName = 'cosine';
+const evaluationMethod = cosineDistance;
 
-  fs.writeFileSync('output.csv', csvHeader.join(',') + '\n' + csvRows.map(row => row.join(',')).join('\n'));
+async function main() {
+  const csvHeader = ['model', 'evaluation', 'text-abbreviation', 'term', 'score'];
+  const csvRows = [];
+
+  const modelDescription = `${testModel.model}[${testModel.dimensions}]`
+  for (const testCase of testCases.texts) {
+    for (const term of testCases.terms) {
+      const score = await compareTexts(testCase.text, term, testModel, evaluationMethodName, evaluationMethod);
+      const scoreFormatted = `${Math.round(score.toFixed(2) * 100)}%`;
+      csvRows.push([modelDescription, evaluationMethodName, `"${testCase.name}"`, `"${term}"`, scoreFormatted]);
+      console.log(`[${testCase.name}] ${evaluationMethodName} with [${term}] = ${scoreFormatted}`);
+    }
+  }
+  console.log('---\n\n');
+
+  fs.writeFileSync('output.csv', csvHeader.join(',') + '\n' + csvRows.map(row => row.join(',')).join('\n'), { encoding: 'utf8', flag: 'w' });
   console.log('Scores saved to output.csv')
 };
 
